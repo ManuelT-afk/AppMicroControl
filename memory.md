@@ -102,6 +102,28 @@
 
 ---
 
+### [2026-05-04] — TYPESCRIPT — "Could not find declaration file for module 'react-dom/client'"
+
+**Contexto**: El IDE marcaba error en `import { createRoot } from "react-dom/client"` en `main.tsx`.
+
+**Error exacto**: `Could not find a declaration file for module 'react-dom/client'. implicitly has an 'any' type.`
+
+**Causa raíz**: Los paquetes `react` y `react-dom` en npm **solo tienen el código JavaScript** — sus tipos de TypeScript viven en paquetes separados (`@types/react` y `@types/react-dom`). Sin ellos, TypeScript no sabe qué exporta el módulo y asigna `any` implícito.
+
+> 💡 Esto pasa con cualquier librería que no incluya tipos nativos (DefinitelyTyped). Las que SÍ incluyen tipos (como Firebase v9+) no necesitan `@types/`.
+
+**Corrección**: `npm install --save-dev @types/react @types/react-dom`
+
+**Aprendizaje**:
+> ✅ TODO proyecto React+TypeScript necesita `@types/react` y `@types/react-dom` como devDeps
+> ✅ Instalar ambos juntos siempre — si falta uno el otro puede dar errores
+> ✅ Firebase v9+ ya incluye sus propios tipos, no necesita `@types/firebase`
+> ❌ NO instalar como dependency normal (va en `--save-dev`)
+
+**Tags**: #typescript #react #types #definitelytyped #errors
+
+---
+
 ### [2026-05-04] — TYPESCRIPT — IDE muestra errores pero build funciona
 
 **Contexto**: Después de crear `src/lib/firebase.ts`, el IDE marcaba errores rojos en `import.meta.env` y en los imports de Firebase aunque `npm run build` pasaba sin problemas.
