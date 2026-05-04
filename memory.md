@@ -102,6 +102,37 @@
 
 ---
 
+### [2026-05-04] — TYPESCRIPT — IDE muestra errores pero build funciona
+
+**Contexto**: Después de crear `src/lib/firebase.ts`, el IDE marcaba errores rojos en `import.meta.env` y en los imports de Firebase aunque `npm run build` pasaba sin problemas.
+
+**Error**: El IDE no reconocía `import.meta.env` (subrayado rojo) y quizás los módulos de Firebase.
+
+**Causa raíz**: El proyecto NO tenía `tsconfig.json`. Sin él, el Language Server de TypeScript no sabe que:
+1. El proyecto usa Vite (y por tanto `import.meta.env` existe)
+2. El módulo resolution debe ser `Bundler`
+3. El tipo JSX es `react-jsx`
+4. Los alias `@/*` → `./src/*` existen
+
+Además, `typescript` no estaba instalado como `devDependency`, lo que impedía correr `tsc --noEmit`.
+
+**Corrección**:
+1. Crear `tsconfig.json` con `"types": ["vite/client"]` y `"moduleResolution": "Bundler"`
+2. Crear `src/vite-env.d.ts` con la interfaz `ImportMetaEnv` tipando cada `VITE_*`
+3. Instalar `typescript` como devDependency: `npm install --save-dev typescript`
+
+**Aprendizaje**:
+> ✅ TODO proyecto Vite+React+TS necesita `tsconfig.json` — sin él el IDE da falsos positivos
+> ✅ `"types": ["vite/client"]` en tsconfig es lo que habilita `import.meta.env`
+> ✅ `"moduleResolution": "Bundler"` es el modo correcto para proyectos con Vite
+> ✅ Crear `src/vite-env.d.ts` tipando las `VITE_*` para autocompletado y seguridad de tipos
+> ✅ Instalar `typescript` como devDep para poder correr `tsc --noEmit` y validar tipos
+> ❌ No confundir "el build funciona" con "el IDE está contento" — necesitan tsconfig
+
+**Tags**: #typescript #vite #tsconfig #ide #errors
+
+---
+
 ### [2026-05-04] — HERRAMIENTAS — Error de token limit en write_to_file
 
 **Contexto**: Se intentó crear `agents.md` con contenido muy extenso (más de 64,000 tokens en una sola llamada).

@@ -7,4 +7,3 @@ import "./styles/index.css";
 import "./lib/firebase";
 
 createRoot(document.getElementById("root")!).render(<App />);
-  
