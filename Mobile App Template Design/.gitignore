@@ -1,0 +1,13 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (NO commitear)
+.env
+.env.local
+.env.production
+
+# Build
+dist/
+
+# Logs
+*.log

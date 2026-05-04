@@ -61,6 +61,47 @@
 
 ---
 
+### [2026-05-04] — FIREBASE — Instalación en directorio incorrecto
+
+**Contexto**: El usuario corrió `npm install firebase` en `d:\proyectosAnti\appMicroGastos\` (la raíz), pero el `package.json` real está en `Mobile App Template Design\`.
+
+**Error**: Firebase se instaló en el `node_modules` del directorio raíz, no en el del proyecto Vite. El proyecto no podía resolver el módulo.
+
+**Causa raíz**: El usuario estaba parado en el directorio padre al ejecutar el comando. El raíz tiene un `package.json` vacío generado accidentalmente.
+
+**Corrección**: Instalar de nuevo con `npm install firebase` dentro de `Mobile App Template Design\`.
+
+**Aprendizaje**:
+> ✅ SIEMPRE verificar que el CWD apunta a `Mobile App Template Design\` antes de instalar paquetes
+> ✅ El `package.json` real del proyecto está en el subdirectorio, NO en la raíz
+> ❌ No ejecutar comandos npm/pnpm desde `d:\proyectosAnti\appMicroGastos\` directamente
+
+**Tags**: #firebase #npm #instalacion #directorio
+
+---
+
+### [2026-05-04] — FIREBASE — Patrón de inicialización correcto
+
+**Contexto**: Integración de Firebase SDK en el proyecto Vite/React.
+
+**Decisiones tomadas**:
+1. Crear `src/lib/firebase.ts` como módulo central (fuente de verdad de servicios)
+2. Usar `import.meta.env.VITE_*` para leer las credenciales (OWASP A02)
+3. Usar `getApps().length === 0 ? initializeApp() : getApp()` para evitar doble init en hot-reload de Vite
+4. `isSupported()` antes de `getAnalytics()` para compatibilidad con entornos sin browser
+5. Importar en `main.tsx` como side-effect (`import "./lib/firebase"`) para garantizar init antes de render
+
+**Aprendizaje**:
+> ✅ Firebase config en `.env` con prefijo `VITE_` (Vite no expone env vars sin ese prefijo)
+> ✅ Exportar `auth`, `db`, `storage` desde `firebase.ts` — todos los componentes importan de ahí
+> ✅ `getApps().length` evita el error "Firebase already initialized" en HMR
+> ✅ Agregar `.env` al `.gitignore` inmediatamente tras crearlo
+> ❌ NUNCA importar directamente `firebase/app` en componentes — siempre usar `src/lib/firebase`
+
+**Tags**: #firebase #vite #owasp #inicializacion
+
+---
+
 ### [2026-05-04] — HERRAMIENTAS — Error de token limit en write_to_file
 
 **Contexto**: Se intentó crear `agents.md` con contenido muy extenso (más de 64,000 tokens en una sola llamada).
