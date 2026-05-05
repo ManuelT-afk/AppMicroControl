@@ -1,4 +1,4 @@
-import { Plus, Utensils, Car, Cookie, PartyPopper, CreditCard, ShoppingBag, TrendingUp, ChevronRight } from 'lucide-react';
+import { Plus, Utensils, Car, Cookie, PartyPopper, CreditCard, ShoppingBag, TrendingUp, ChevronRight, Settings } from 'lucide-react';
 import { Category, Expense } from '../App';
 
 type HomeScreenProps = {
@@ -8,6 +8,7 @@ type HomeScreenProps = {
   totalSpent: number;
   onAddExpense: () => void;
   onViewBudget: () => void;
+  onOpenSettings: () => void;
 };
 
 const iconMap: Record<string, any> = {
@@ -26,6 +27,7 @@ export default function HomeScreen({
   totalSpent,
   onAddExpense,
   onViewBudget,
+  onOpenSettings,
 }: HomeScreenProps) {
   const remaining = totalBudget - totalSpent;
   const progress = (totalSpent / totalBudget) * 100;
@@ -46,39 +48,36 @@ export default function HomeScreen({
               </h1>
             </div>
 
-            <div className="relative w-20 h-20">
-              <svg className="w-20 h-20 transform -rotate-90">
-                <circle
-                  cx="40"
-                  cy="40"
-                  r="32"
-                  stroke="currentColor"
-                  strokeWidth="6"
-                  fill="none"
-                  className="text-slate-800"
-                />
-                <circle
-                  cx="40"
-                  cy="40"
-                  r="32"
-                  stroke="url(#gradient)"
-                  strokeWidth="6"
-                  fill="none"
-                  strokeDasharray={`${2 * Math.PI * 32}`}
-                  strokeDashoffset={`${2 * Math.PI * 32 * (1 - progress / 100)}`}
-                  strokeLinecap="round"
-                  className="transition-all duration-500"
-                />
-                <defs>
-                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#3b82f6" />
-                    <stop offset="50%" stopColor="#a855f7" />
-                    <stop offset="100%" stopColor="#ec4899" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-white text-sm">{Math.round(progress)}%</span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onOpenSettings}
+                className="p-3 rounded-2xl bg-slate-900/50 backdrop-blur-md border border-slate-800 text-slate-400 hover:text-white transition-all"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+              
+              <div className="relative w-20 h-20">
+                <svg className="w-20 h-20 transform -rotate-90">
+                  <circle cx="40" cy="40" r="32" stroke="currentColor" strokeWidth="6" fill="none" className="text-slate-800" />
+                  <circle
+                    cx="40" cy="40" r="32"
+                    stroke="url(#gradient)" strokeWidth="6" fill="none"
+                    strokeDasharray={`${2 * Math.PI * 32}`}
+                    strokeDashoffset={`${2 * Math.PI * 32 * (1 - progress / 100)}`}
+                    strokeLinecap="round"
+                    className="transition-all duration-500"
+                  />
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="50%" stopColor="#a855f7" />
+                      <stop offset="100%" stopColor="#ec4899" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-white text-sm">{Math.round(progress)}%</span>
+                </div>
               </div>
             </div>
           </div>
@@ -109,7 +108,7 @@ export default function HomeScreen({
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:gap-4 gap-3">
             {categories.slice(0, 4).map((category) => {
               const Icon = iconMap[category.icon];
               const categoryProgress = (category.spent / category.budget) * 100;
