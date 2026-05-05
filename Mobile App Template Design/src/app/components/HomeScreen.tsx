@@ -1,4 +1,4 @@
-import { Plus, Utensils, Car, Cookie, PartyPopper, CreditCard, ShoppingBag, TrendingUp, ChevronRight, Settings } from 'lucide-react';
+import { Plus, Utensils, Car, Cookie, PartyPopper, CreditCard, ShoppingBag, ChevronRight, Settings, LogOut } from 'lucide-react';
 import { Category, Expense } from '../App';
 
 type HomeScreenProps = {
@@ -6,9 +6,11 @@ type HomeScreenProps = {
   expenses: Expense[];
   totalBudget: number;
   totalSpent: number;
+  userName: string;
   onAddExpense: () => void;
   onViewBudget: () => void;
   onOpenSettings: () => void;
+  onLogout: () => void;
 };
 
 const iconMap: Record<string, any> = {
@@ -21,13 +23,8 @@ const iconMap: Record<string, any> = {
 };
 
 export default function HomeScreen({
-  categories,
-  expenses,
-  totalBudget,
-  totalSpent,
-  onAddExpense,
-  onViewBudget,
-  onOpenSettings,
+  categories, expenses, totalBudget, totalSpent, userName,
+  onAddExpense, onViewBudget, onOpenSettings, onLogout,
 }: HomeScreenProps) {
   const remaining = totalBudget - totalSpent;
   const progress = (totalSpent / totalBudget) * 100;
@@ -39,49 +36,64 @@ export default function HomeScreen({
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-3xl" />
 
-        <div className="relative z-10 p-6 space-y-6">
+        <div className="relative z-10 p-6 space-y-4">
+          {/* Fila 1: Saludo + botones de acción */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-400 text-sm">Quincenal disponible</p>
-              <h1 className="text-4xl text-white mt-1">
-                ${remaining.toLocaleString()}
-              </h1>
+              <p className="text-slate-400 text-sm">Hola, {userName ? userName.split(' ')[0] : 'bienvenido'} 👋</p>
+              <p className="text-slate-500 text-xs">Quincenal disponible</p>
             </div>
-
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 onClick={onOpenSettings}
-                className="p-3 rounded-2xl bg-slate-900/50 backdrop-blur-md border border-slate-800 text-slate-400 hover:text-white transition-all"
+                className="p-2.5 rounded-xl bg-slate-900/50 backdrop-blur-md border border-slate-800 text-slate-400 hover:text-white transition-all"
               >
                 <Settings className="w-5 h-5" />
               </button>
-              
-              <div className="relative w-20 h-20">
-                <svg className="w-20 h-20 transform -rotate-90">
-                  <circle cx="40" cy="40" r="32" stroke="currentColor" strokeWidth="6" fill="none" className="text-slate-800" />
-                  <circle
-                    cx="40" cy="40" r="32"
-                    stroke="url(#gradient)" strokeWidth="6" fill="none"
-                    strokeDasharray={`${2 * Math.PI * 32}`}
-                    strokeDashoffset={`${2 * Math.PI * 32 * (1 - progress / 100)}`}
-                    strokeLinecap="round"
-                    className="transition-all duration-500"
-                  />
-                  <defs>
-                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#3b82f6" />
-                      <stop offset="50%" stopColor="#a855f7" />
-                      <stop offset="100%" stopColor="#ec4899" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-white text-sm">{Math.round(progress)}%</span>
-                </div>
+              <button
+                onClick={onLogout}
+                className="p-2.5 rounded-xl bg-slate-900/50 backdrop-blur-md border border-slate-800 text-slate-400 hover:text-red-400 transition-all"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Fila 2: Balance + Ring de progreso */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl text-white font-bold">
+                ${remaining.toLocaleString()}
+              </h1>
+              <p className="text-slate-500 text-xs mt-1">{Math.round(progress)}% del presupuesto usado</p>
+            </div>
+
+            <div className="relative w-20 h-20">
+              <svg className="w-20 h-20 transform -rotate-90">
+                <circle cx="40" cy="40" r="32" stroke="currentColor" strokeWidth="6" fill="none" className="text-slate-800" />
+                <circle
+                  cx="40" cy="40" r="32"
+                  stroke="url(#gradient)" strokeWidth="6" fill="none"
+                  strokeDasharray={`${2 * Math.PI * 32}`}
+                  strokeDashoffset={`${2 * Math.PI * 32 * (1 - Math.min(progress, 100) / 100)}`}
+                  strokeLinecap="round"
+                  className="transition-all duration-500"
+                />
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="50%" stopColor="#a855f7" />
+                    <stop offset="100%" stopColor="#ec4899" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-white text-sm font-medium">{Math.round(progress)}%</span>
               </div>
             </div>
           </div>
 
+          {/* Fila 3: Stats */}
           <div className="flex gap-3 text-sm">
             <div className="flex-1 bg-slate-900/50 backdrop-blur-sm rounded-xl p-3 border border-slate-800/50">
               <p className="text-slate-500">Presupuesto</p>
@@ -94,6 +106,7 @@ export default function HomeScreen({
           </div>
         </div>
       </div>
+
 
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
         <div>

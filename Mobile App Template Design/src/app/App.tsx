@@ -6,7 +6,7 @@ import {
   Timestamp, doc, setDoc, getDoc
 } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 import OnboardingScreen from './components/OnboardingScreen';
 import HomeScreen from './components/HomeScreen';
@@ -56,6 +56,7 @@ export default function App() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
 
   // Control de gastos hormiga
@@ -68,20 +69,48 @@ export default function App() {
 
   // ── Detectar usuario autenticado ────────────────────────────────────────
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUserId(user.uid);
-        // Usuario nuevo → onboarding; usuario existente → home
-        const isNew = user.metadata.creationTime === user.metadata.lastSignInTime;
-        setCurrentScreen(isNew ? 'onboarding' : 'home');
+        setUserName(user.displayName ?? user.email?.split('@')[0] ?? 'Usuario');
+
+        // Verificar en Firestore si ya completó el onboarding (100% confiable)
+        // Esto evita mostrar pantallas introductorias a usuarios existentes
+        try {
+          const profileRef = doc(db, 'users', user.uid, 'config', 'profile');
+          const profileSnap = await getDoc(profileRef);
+          const onboardingCompleted = profileSnap.data()?.onboardingCompleted === true;
+          setCurrentScreen(onboardingCompleted ? 'home' : 'onboarding');
+        } catch {
+          // Si falla Firestore, asumimos usuario existente (menos intrusivo)
+          setCurrentScreen('home');
+        }
       } else {
         setUserId(null);
+        setUserName('');
         setCurrentScreen('welcome');
       }
       setLoading(false);
     });
     return () => unsub();
   }, []);
+
+  // ── Cerrar sesión ─────────────────────────────────────────────────────────
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      // Limpiar estado local (OWASP A07: logout limpia todo)
+      setExpenses([]);
+      setCategories(DEFAULT_CATEGORIES);
+      setMaxLimit(500);
+      setIsLocked(true);
+      setEmergencyMode(false);
+      setShowAddExpense(false);
+      // onAuthStateChanged detecta el logout y navega a 'welcome'
+    } catch {
+      toast.error('Error al cerrar sesión. Intenta de nuevo.');
+    }
+  };
 
   // ── Cargar configuración del usuario desde Firestore ────────────────────
   useEffect(() => {
@@ -184,8 +213,16 @@ export default function App() {
     }
   };
 
-  const handleOnboardingComplete = () => {
-    // Si ya tiene gastos va directo a home, si no al empty state
+  const handleOnboardingComplete = async () => {
+    // Marcar onboarding como completado en Firestore para no volver a mostrarlo
+    if (userId) {
+      try {
+        const profileRef = doc(db, 'users', userId, 'config', 'profile');
+        await setDoc(profileRef, { onboardingCompleted: true }, { merge: true });
+      } catch {
+        // No bloquear la navegación si falla la escritura
+      }
+    }
     setCurrentScreen(expenses.length > 0 ? 'home' : 'empty');
   };
 
@@ -260,9 +297,11 @@ export default function App() {
               expenses={expenses}
               totalBudget={totalBudget}
               totalSpent={totalSpent}
+              userName={userName}
               onAddExpense={() => setShowAddExpense(true)}
               onViewBudget={() => setCurrentScreen('budget')}
               onOpenSettings={() => setCurrentScreen('settings')}
+              onLogout={handleLogout}
             />
           )}
 
@@ -278,9 +317,11 @@ export default function App() {
               maxLimit={maxLimit}
               isLocked={isLocked}
               emergencyMode={emergencyMode}
+              userName={userName}
               onUpdateLimit={handleUpdateLimit}
               onToggleLock={handleToggleLock}
               onToggleEmergency={handleToggleEmergency}
+              onLogout={handleLogout}
               onBack={() => setCurrentScreen('home')}
             />
           )}

@@ -102,6 +102,33 @@
 
 ---
 
+### [2026-05-05] — BUG — creationTime===lastSignInTime no es confiable para detectar usuarios nuevos
+
+**Contexto**: Los usuarios existentes veían las pantallas de Welcome/Onboarding al iniciar sesión nuevamente.
+
+**Causa**: `user.metadata.creationTime === user.metadata.lastSignInTime` tiene casos borde:
+- Con Google Sign-In: Firebase puede actualizar `lastSignInTime` antes de que el callback ejecute
+- Al hacer logout + login rápido: los timestamps pueden coincidir aunque no sea usuario nuevo
+
+**Solución implementada**:
+1. Al terminar onboarding → `setDoc(profileRef, { onboardingCompleted: true }, { merge: true })`
+2. En `onAuthStateChanged` → `getDoc(profileRef)` y leer `onboardingCompleted`
+3. Si `true` → home directamente; si `false` o no existe → onboarding
+
+**Ventajas**:
+- Funciona en todos los dispositivos (no depende del device)
+- Funciona con cualquier proveedor de auth (Email, Google)
+- Es el estado canónico: si el usuario completa onboarding, el flag queda en Firestore para siempre
+
+**Estructura Firestore**:
+```
+users/{uid}/config/profile.onboardingCompleted = true  (se escribe al terminar onboarding)
+```
+
+**Tags**: #bug #auth #onboarding #routing #firestore
+
+---
+
 ### [2026-05-05] — CRÍTICO — Auth completamente mock: datos nunca llegaban a Firestore
 
 **Contexto**: El usuario reportó que el registro de gastos y perfil no se guardaban en Firebase aunque el código de Firestore estaba correcto.
