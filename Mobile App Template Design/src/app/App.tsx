@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Toaster } from 'sonner';
 import { toast } from 'sonner';
 import {
@@ -7,6 +7,9 @@ import {
 } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { useTransaccionesMonitor, AlertaCybercore } from '../hooks/useTransaccionesMonitor';
+import AlertaCybercorePanel from './components/AlertaCybercorePanel';
+import { simularGastoEntrante } from '../lib/simuladorBanco';
 
 import OnboardingScreen from './components/OnboardingScreen';
 import HomeScreen from './components/HomeScreen';
@@ -66,6 +69,36 @@ export default function App() {
 
   const totalBudget = categories.reduce((sum, cat) => sum + cat.budget, 0);
   const totalSpent = categories.reduce((sum, cat) => sum + cat.spent, 0);
+
+  // ── Alertas IA Cybercore ────────────────────────────────────────────────
+  const [alertasCybercore, setAlertasCybercore] = useState<AlertaCybercore[]>([]);
+
+  const handleNuevaAlerta = useCallback((alerta: AlertaCybercore) => {
+    setAlertasCybercore((prev) => [alerta, ...prev].slice(0, 5)); // Max 5 alertas
+  }, []);
+
+  const handleDismissAlerta = useCallback((id: string) => {
+    setAlertasCybercore((prev) => prev.filter((a) => a.id !== id));
+  }, []);
+
+  // Activar monitor de transacciones IA
+  useTransaccionesMonitor({
+    userId,
+    totalGastado: totalSpent,
+    limiteActual: maxLimit,
+    onAlerta: handleNuevaAlerta,
+  });
+
+  // Simulador de banco (solo para pruebas)
+  const handleSimularGasto = async () => {
+    if (!userId) { toast.error('Inicia sesión para simular gastos'); return; }
+    try {
+      await simularGastoEntrante(userId);
+      toast.info('🏦 Gasto bancario simulado', { duration: 2000 });
+    } catch {
+      toast.error('Error al simular gasto');
+    }
+  };
 
   // ── Detectar usuario autenticado ────────────────────────────────────────
   useEffect(() => {
@@ -322,6 +355,7 @@ export default function App() {
               onToggleLock={handleToggleLock}
               onToggleEmergency={handleToggleEmergency}
               onLogout={handleLogout}
+              onSimularGasto={handleSimularGasto}
               onBack={() => setCurrentScreen('home')}
             />
           )}
@@ -335,6 +369,12 @@ export default function App() {
               />
             </div>
           )}
+
+          {/* Panel de alertas IA Cybercore — siempre visible encima de todo */}
+          <AlertaCybercorePanel
+            alertas={alertasCybercore}
+            onDismiss={handleDismissAlerta}
+          />
 
         </div>
       </div>
