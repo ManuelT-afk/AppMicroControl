@@ -35,9 +35,9 @@ export function useTransaccionesMonitor({
   onAlerta,
   mostrarAlertaEnInterfaz,
 }: Props) {
-  const procesadosRef   = useRef<Set<string>>(new Set());
+  const procesadosRef = useRef<Set<string>>(new Set());
   // Flag: mientras es true, los docs son "existentes" (carga inicial) — no mostrar alertas
-  const isInitialLoad   = useRef(true);
+  const isInitialLoad = useRef(true);
 
   useEffect(() => {
     if (!userId) return;
@@ -74,9 +74,9 @@ export function useTransaccionesMonitor({
 
         // ── Transacción NUEVA (después de la carga inicial) ───────────────
         const datos = change.doc.data();
-        const monto: number    = datos.monto    ?? 0;
+        const monto: number = datos.monto ?? 0;
         const comercio: string = datos.comercio ?? 'Comercio';
-        const saldoRestante    = Math.max(limiteActual - totalGastado, 0);
+        const saldoRestante = Math.max(limiteActual - totalGastado, 0);
 
         try {
           // Llamar a Antigravity IA
@@ -96,8 +96,8 @@ export function useTransaccionesMonitor({
             titulo: nivel === 'critico'
               ? '⚠️ Límite casi alcanzado'
               : nivel === 'alerta'
-              ? '👀 Más de la mitad gastada'
-              : '✅ Gasto detectado',
+                ? '👀 Más de la mitad gastada'
+                : '✅ Gasto detectado',
             mensaje: respuestaIA,
             nivel,
             monto,
