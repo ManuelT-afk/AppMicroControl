@@ -9,7 +9,6 @@ import { db, auth } from '../lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { useTransaccionesMonitor, AlertaCybercore } from '../hooks/useTransaccionesMonitor';
 import AlertaCybercorePanel from './components/AlertaCybercorePanel';
-import { simularGastoEntrante } from '../lib/simuladorBanco';
 
 import OnboardingScreen from './components/OnboardingScreen';
 import HomeScreen from './components/HomeScreen';
@@ -70,8 +69,11 @@ export default function App() {
   const totalBudget = categories.reduce((sum, cat) => sum + cat.budget, 0);
   const totalSpent = categories.reduce((sum, cat) => sum + cat.spent, 0);
 
-  // ── Alertas IA Cybercore ────────────────────────────────────────────────
+  // ── Alertas IA ───────────────────────────────────────────────────────────
   const [alertasCybercore, setAlertasCybercore] = useState<AlertaCybercore[]>([]);
+
+  // Banner de texto plano — patrón mostrarAlertaEnInterfaz del usuario
+  const [notificacion, setNotificacion] = useState('');
 
   const handleNuevaAlerta = useCallback((alerta: AlertaCybercore) => {
     setAlertasCybercore((prev) => [alerta, ...prev].slice(0, 5)); // Max 5 alertas
@@ -81,24 +83,20 @@ export default function App() {
     setAlertasCybercore((prev) => prev.filter((a) => a.id !== id));
   }, []);
 
-  // Activar monitor de transacciones IA
+  // Esta función es la que llama el hook — igual que el ejemplo del usuario
+  const mostrarAlertaEnInterfaz = useCallback((mensaje: string) => {
+    setNotificacion(mensaje);
+    setTimeout(() => setNotificacion(''), 8000); // Desaparecer a los 8 segundos
+  }, []);
+
+  // Activar monitor de transacciones IA (useMonitorGastos adaptado)
   useTransaccionesMonitor({
     userId,
     totalGastado: totalSpent,
     limiteActual: maxLimit,
     onAlerta: handleNuevaAlerta,
+    mostrarAlertaEnInterfaz,
   });
-
-  // Simulador de banco (solo para pruebas)
-  const handleSimularGasto = async () => {
-    if (!userId) { toast.error('Inicia sesión para simular gastos'); return; }
-    try {
-      await simularGastoEntrante(userId);
-      toast.info('🏦 Gasto bancario simulado', { duration: 2000 });
-    } catch {
-      toast.error('Error al simular gasto');
-    }
-  };
 
   // ── Detectar usuario autenticado ────────────────────────────────────────
   useEffect(() => {
@@ -295,6 +293,19 @@ export default function App() {
       <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900 p-0 sm:p-4 md:p-8">
         <div className="w-full sm:max-w-[440px] md:max-w-[600px] min-h-screen sm:min-h-0 sm:h-[844px] md:h-[90vh] sm:rounded-[3rem] bg-slate-950 relative overflow-hidden shadow-2xl border-0 sm:border border-slate-800/50 transition-all duration-300">
 
+          {/* Banner Antigravity — mostrarAlertaEnInterfaz */}
+          {notificacion && (
+            <div className="absolute bottom-24 left-4 right-4 z-[150] bg-slate-900/95 backdrop-blur-xl border border-purple-500/30 rounded-2xl px-4 py-3 shadow-xl shadow-purple-500/10 animate-in slide-in-from-bottom-4">
+              <div className="flex items-start gap-3">
+                <span className="text-lg flex-shrink-0">🤖</span>
+                <div>
+                  <p className="text-purple-300 text-[11px] font-medium mb-0.5">Antigravity dice:</p>
+                  <p className="text-white text-xs leading-relaxed">{notificacion}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {currentScreen === 'welcome' && (
             <WelcomeScreen
               onLogin={() => setCurrentScreen('login')}
@@ -355,7 +366,6 @@ export default function App() {
               onToggleLock={handleToggleLock}
               onToggleEmergency={handleToggleEmergency}
               onLogout={handleLogout}
-              onSimularGasto={handleSimularGasto}
               onBack={() => setCurrentScreen('home')}
             />
           )}

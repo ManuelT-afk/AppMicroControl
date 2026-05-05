@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, ShieldCheck, ShieldAlert, DollarSign, Zap, LogOut, User, FlaskConical } from 'lucide-react';
+import { ChevronLeft, ShieldCheck, ShieldAlert, DollarSign, Zap, LogOut, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 type SettingsScreenProps = {
@@ -11,13 +11,12 @@ type SettingsScreenProps = {
   onToggleLock: (locked: boolean) => void;
   onToggleEmergency: (emergency: boolean) => void;
   onLogout: () => void;
-  onSimularGasto: () => void;
   onBack: () => void;
 };
 
 export default function SettingsScreen({
   maxLimit, isLocked, emergencyMode, userName,
-  onUpdateLimit, onToggleLock, onToggleEmergency, onLogout, onSimularGasto, onBack,
+  onUpdateLimit, onToggleLock, onToggleEmergency, onLogout, onBack,
 }: SettingsScreenProps) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -117,27 +116,6 @@ export default function SettingsScreen({
             <p className="text-slate-500 text-[10px] leading-relaxed">
               * Permite registrar gastos vitales incluso superando el límite. Úsalo con responsabilidad.
             </p>
-          </div>
-        </section>
-
-        {/* Simulador IA — para pruebas */}
-        <section className="pt-2 border-t border-slate-800">
-          <div className="bg-purple-500/10 rounded-3xl p-5 border border-purple-500/20 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-purple-500/20 text-purple-400">
-                <FlaskConical className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-white font-medium text-sm">Simulador de Banco IA</h3>
-                <p className="text-purple-400/70 text-xs">Prueba el monitor Gemini en tiempo real</p>
-              </div>
-            </div>
-            <button
-              onClick={onSimularGasto}
-              className="w-full py-3 rounded-2xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-500 active:scale-95 transition-all"
-            >
-              🏦 Simular gasto bancario
-            </button>
           </div>
         </section>
 

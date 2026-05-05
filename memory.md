@@ -102,6 +102,61 @@
 
 ---
 
+### [2026-05-05] — BUG CRÍTICO — onSnapshot dispara todos los docs existentes como "added" al suscribirse
+
+**Contexto**: Al registrar un gasto, aparecían múltiples alertas de Antigravity IA con textos como "Más de la mitad gastada / No se pudo analizar". El usuario NO había hecho nada nuevo.
+
+**Causa raíz**: `onSnapshot` de Firestore funciona así — al suscribirse por primera vez, dispara TODOS los documentos que coinciden con la query como eventos `docChanges()` con `type === "added"`, aunque sean documentos viejos. Los gastos simulados anteriores que quedaron con `procesado: false` se disparaban todos al inicio como si fueran nuevos.
+
+**Solución implementada**:
+```typescript
+const isInitialLoad = useRef(true);
+// Dentro del callback:
+if (isInitialLoad.current) {
+  // Silenciosamente marcar como procesado — NO mostrar alerta
+  await updateDoc(docRef, { procesado: true });
+  return;
+}
+// Después del primer snapshot:
+isInitialLoad.current = false;
+```
+
+**Regla aprendida**:
+> ✅ SIEMPRE usar `isInitialLoad` flag en hooks con `onSnapshot` que procesan `docChanges()`
+> ✅ El primer snapshot = estado actual de la BD (docs existentes), NO eventos nuevos
+> ❌ NUNCA asumir que `type === "added"` en el primer snapshot significa "recién creado"
+
+**Tags**: #bug #firestore #onSnapshot #isInitialLoad #alertas
+
+---
+
+### [2026-05-05] — MALA PRÁCTICA — Código muerto acumulado tras eliminar UI
+
+**Contexto**: Al eliminar el "Simulador de Banco IA" de SettingsScreen, quedaron en `App.tsx` funciones y imports sin usar: `handleSimularGasto`, `detectarGastoPrueba`, `simularGastoEntrante`, `analizarGastoConIA`.
+
+**Causa**: Se eliminó el bloque JSX pero no se limpió el código que lo alimentaba.
+
+**Consecuencia**: Build warnings, código confuso, posibles side-effects en tests.
+
+**Protocolo correcto al eliminar UI**:
+1. Eliminar el componente/sección JSX
+2. Buscar con grep todas las props, funciones e imports que alimentaban ese bloque
+3. Eliminarlos todos en la misma operación
+4. Correr `tsc --noEmit` para confirmar 0 errores
+
+**Comandos de diagnóstico**:
+```bash
+# Detectar imports no usados y errores
+node_modules/typescript/bin/tsc --noEmit
+
+# Buscar referencias huérfanas
+grep -r "nombreFuncion" src/
+```
+
+**Tags**: #malaprāctica #deadcode #cleanup #imports
+
+---
+
 ### [2026-05-05] — BUG — creationTime===lastSignInTime no es confiable para detectar usuarios nuevos
 
 **Contexto**: Los usuarios existentes veían las pantallas de Welcome/Onboarding al iniciar sesión nuevamente.
