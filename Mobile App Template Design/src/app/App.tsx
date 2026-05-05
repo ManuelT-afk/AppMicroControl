@@ -184,7 +184,10 @@ export default function App() {
     }
   };
 
-  const handleOnboardingComplete = () => setCurrentScreen('empty');
+  const handleOnboardingComplete = () => {
+    // Si ya tiene gastos va directo a home, si no al empty state
+    setCurrentScreen(expenses.length > 0 ? 'home' : 'empty');
+  };
 
   const handleUpdateLimit = (val: number) => {
     setMaxLimit(val);
@@ -232,14 +235,14 @@ export default function App() {
           {currentScreen === 'login' && (
             <LoginScreen
               onSwitchToRegister={() => setCurrentScreen('register')}
-              onLogin={() => setCurrentScreen('onboarding')}
+              onLogin={() => { /* onAuthStateChanged maneja la navegación */ }}
             />
           )}
 
           {currentScreen === 'register' && (
             <RegisterScreen
               onSwitchToLogin={() => setCurrentScreen('login')}
-              onRegister={() => setCurrentScreen('onboarding')}
+              onRegister={() => { /* onAuthStateChanged maneja la navegación */ }}
             />
           )}
 
