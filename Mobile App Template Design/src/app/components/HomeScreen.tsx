@@ -1,4 +1,4 @@
-import { Plus, Utensils, Car, Cookie, PartyPopper, CreditCard, ShoppingBag, ChevronRight, Settings, LogOut } from 'lucide-react';
+import { Plus, Utensils, Car, Cookie, PartyPopper, CreditCard, ShoppingBag, ChevronRight, Settings, LogOut, Search, PieChart as PieChartIcon } from 'lucide-react';
 import { Category, Expense } from '../App';
 
 type HomeScreenProps = {
@@ -10,6 +10,8 @@ type HomeScreenProps = {
   onAddExpense: () => void;
   onViewBudget: () => void;
   onOpenSettings: () => void;
+  onOpenCharts: () => void;
+  onOpenHistory: () => void;
   onLogout: () => void;
 };
 
@@ -24,7 +26,7 @@ const iconMap: Record<string, any> = {
 
 export default function HomeScreen({
   categories, expenses, totalBudget, totalSpent, userName,
-  onAddExpense, onViewBudget, onOpenSettings, onLogout,
+  onAddExpense, onViewBudget, onOpenSettings, onOpenCharts, onOpenHistory, onLogout,
 }: HomeScreenProps) {
   const remaining = totalBudget - totalSpent;
   const progress = (totalSpent / totalBudget) * 100;
@@ -45,16 +47,25 @@ export default function HomeScreen({
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={onOpenSettings}
+                onClick={onOpenHistory}
                 className="p-2.5 rounded-xl bg-slate-900/50 backdrop-blur-md border border-slate-800 text-slate-400 hover:text-white transition-all"
+                title="Historial"
               >
-                <Settings className="w-5 h-5" />
+                <Search className="w-5 h-5" />
               </button>
               <button
-                onClick={onLogout}
-                className="p-2.5 rounded-xl bg-slate-900/50 backdrop-blur-md border border-slate-800 text-slate-400 hover:text-red-400 transition-all"
+                onClick={onOpenCharts}
+                className="p-2.5 rounded-xl bg-slate-900/50 backdrop-blur-md border border-slate-800 text-slate-400 hover:text-white transition-all"
+                title="Estadísticas"
               >
-                <LogOut className="w-5 h-5" />
+                <PieChartIcon className="w-5 h-5" />
+              </button>
+              <button
+                onClick={onOpenSettings}
+                className="p-2.5 rounded-xl bg-slate-900/50 backdrop-blur-md border border-slate-800 text-slate-400 hover:text-white transition-all"
+                title="Ajustes"
+              >
+                <Settings className="w-5 h-5" />
               </button>
             </div>
           </div>

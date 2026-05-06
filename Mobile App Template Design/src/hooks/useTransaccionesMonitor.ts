@@ -8,7 +8,7 @@ import {
   updateDoc, doc, orderBy, Timestamp,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { analizarGastoConIA } from '../services/antigravity';
+import { analizarGastoConIA } from '@/services/antigravity';
 
 export type AlertaCybercore = {
   id: string;
@@ -39,14 +39,31 @@ export function useTransaccionesMonitor({
   // Flag: mientras es true, los docs son "existentes" (carga inicial) — no mostrar alertas
   const isInitialLoad = useRef(true);
 
+  // ── Solicitar permisos al cargar ──────────────────────────────────────────
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  const enviarNotificacionNativa = (titulo: string, cuerpo: string) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(titulo, {
+        body: cuerpo,
+        icon: '/logo.png', // Ajustar ruta si existe un logo
+      });
+    }
+  };
+
   useEffect(() => {
     if (!userId) return;
 
-    const transaccionesRef = collection(db, 'users', userId, 'transacciones');
+    // Ahora escuchamos la colección real de gastos
+    const expensesRef = collection(db, 'users', userId, 'expenses');
     const q = query(
-      transaccionesRef,
+      expensesRef,
       where('procesado', '==', false),
-      orderBy('fecha', 'desc')
+      orderBy('date', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -65,7 +82,7 @@ export function useTransaccionesMonitor({
         if (isInitialLoad.current) {
           try {
             await updateDoc(
-              doc(db, 'users', userId, 'transacciones', docId),
+              doc(db, 'users', userId, 'expenses', docId),
               { procesado: true }
             );
           } catch { /* silencioso */ }
@@ -74,30 +91,36 @@ export function useTransaccionesMonitor({
 
         // ── Transacción NUEVA (después de la carga inicial) ───────────────
         const datos = change.doc.data();
-        const monto: number = datos.monto ?? 0;
-        const comercio: string = datos.comercio ?? 'Comercio';
-        const saldoRestante = Math.max(limiteActual - totalGastado, 0);
+        const monto: number    = datos.amount ?? 0;
+        const comercio: string = datos.note   ?? datos.category ?? 'Gasto';
+        const saldoRestante    = Math.max(limiteActual - totalGastado, 0);
 
         try {
           // Llamar a Antigravity IA
           const respuestaIA = await analizarGastoConIA(monto, comercio, saldoRestante);
-          console.log('Nueva notificación de Antigravity:', respuestaIA);
-
-          // Mostrar banner de texto
-          mostrarAlertaEnInterfaz?.(respuestaIA);
-
+          
           // Emitir alerta tipada al panel visual
           const porcentaje = ((totalGastado + monto) / limiteActual) * 100;
           const nivel: AlertaCybercore['nivel'] =
             porcentaje > 90 ? 'critico' : porcentaje > 60 ? 'alerta' : 'info';
 
+          const tituloAlerta = nivel === 'critico'
+            ? '⚠️ Límite casi alcanzado'
+            : nivel === 'alerta'
+            ? '👀 Más de la mitad gastada'
+            : '✅ Gasto detectado';
+
+          // Enviar notificación nativa para niveles importantes
+          if (nivel !== 'info') {
+            enviarNotificacionNativa(`Antigravity: ${tituloAlerta}`, respuestaIA);
+          }
+
+          // Mostrar banner de texto
+          mostrarAlertaEnInterfaz?.(respuestaIA);
+
           onAlerta({
             id: docId,
-            titulo: nivel === 'critico'
-              ? '⚠️ Límite casi alcanzado'
-              : nivel === 'alerta'
-                ? '👀 Más de la mitad gastada'
-                : '✅ Gasto detectado',
+            titulo: tituloAlerta,
             mensaje: respuestaIA,
             nivel,
             monto,
@@ -107,7 +130,7 @@ export function useTransaccionesMonitor({
 
           // Marcar como procesado para no repetir
           await updateDoc(
-            doc(db, 'users', userId, 'transacciones', docId),
+            doc(db, 'users', userId, 'expenses', docId),
             { procesado: true }
           );
         } catch {

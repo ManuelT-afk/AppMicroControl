@@ -130,6 +130,47 @@ isInitialLoad.current = false;
 
 ---
 
+### [2026-05-05] — BUG — Notificaciones de IA desaparecieron tras quitar el Simulador
+
+**Contexto**: Al eliminar el "Simulador de Banco IA", las notificaciones automáticas de Antigravity dejaron de aparecer al registrar gastos.
+
+**Causa raíz**: El hook `useTransaccionesMonitor` estaba configurado para escuchar la colección `transacciones` (que solo usaba el simulador). Al registrar gastos manualmente, estos se guardan en la colección `expenses`. Al no haber datos nuevos en `transacciones`, el monitor nunca se activaba.
+
+**Solución**:
+1. Se actualizó `App.tsx` para incluir `procesado: false` en cada nuevo gasto manual.
+2. Se redirigió `useTransaccionesMonitor` para que escuche la colección `expenses`.
+3. Se mapearon los campos correctamente (`amount` -> `monto`, `note` -> `comercio`).
+
+**Regla aprendida**:
+> ✅ Si se elimina una fuente de datos (simulador), verificar si hay otros procesos (IA, analíticas) que dependan de esa colección y redirigirlos a la fuente de datos real.
+
+**Tags**: #firebase #ia #monitor #notificaciones
+
+---
+
+### [2026-05-05] — BUG — Chatbot Gemini falla si el historial no empieza con 'user'
+
+**Contexto**: El chatbot siempre respondía con el mensaje de error "Lo siento, mi conexión se interrumpió..." a pesar de tener conexión y API Key válida.
+
+**Causa raíz**: La API de Google Generative AI (`startChat`) tiene una validación estricta de roles. El historial de mensajes:
+1. **DEBE** empezar con un mensaje del rol `user`.
+2. **DEBE** alternar estrictamente entre `user` y `model`.
+Como mi estado inicial de `messages` incluía un saludo del bot como primer elemento, el `history` enviado empezaba con `model`, lo que invalidaba toda la petición.
+
+**Solución**:
+En `antigravity.ts`, se añadió un filtro que remueve el primer mensaje si es de tipo `model` antes de pasarlo a `startChat`:
+```typescript
+const historialValido = historial[0]?.role === 'model' ? historial.slice(1) : historial;
+```
+
+**Regla aprendida**:
+> ✅ Al usar `startChat` de Gemini, el array `history` debe empezar siempre por un mensaje del usuario.
+> ✅ Si la interfaz muestra un saludo inicial del bot, este debe excluirse del historial enviado a la API.
+
+**Tags**: #gemini #chatbot #api #error-roles
+
+---
+
 ### [2026-05-05] — MALA PRÁCTICA — Código muerto acumulado tras eliminar UI
 
 **Contexto**: Al eliminar el "Simulador de Banco IA" de SettingsScreen, quedaron en `App.tsx` funciones y imports sin usar: `handleSimularGasto`, `detectarGastoPrueba`, `simularGastoEntrante`, `analizarGastoConIA`.

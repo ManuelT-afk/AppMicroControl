@@ -19,6 +19,9 @@ import LoginScreen from './components/LoginScreen';
 import RegisterScreen from './components/RegisterScreen';
 import WelcomeScreen from './components/WelcomeScreen';
 import SettingsScreen from './components/SettingsScreen';
+import ChartsScreen from './components/ChartsScreen';
+import HistoryScreen from './components/HistoryScreen';
+import ChatbotIA from './components/ChatbotIA';
 
 // ─── Tipos Core (fuente de verdad) ──────────────────────────────────────────
 export type Expense = {
@@ -39,7 +42,7 @@ export type Category = {
   color: string;
 };
 
-type Screen = 'welcome' | 'login' | 'register' | 'onboarding' | 'home' | 'empty' | 'budget' | 'settings';
+type Screen = 'welcome' | 'login' | 'register' | 'onboarding' | 'home' | 'empty' | 'budget' | 'settings' | 'charts' | 'history';
 
 // ─── Categorías por defecto ──────────────────────────────────────────────────
 const DEFAULT_CATEGORIES: Category[] = [
@@ -217,6 +220,7 @@ export default function App() {
           note: expense.note || 'Sin descripción',
           isImpulsive: expense.isImpulsive ?? false,
           date: Timestamp.now(),
+          procesado: false, // Indicador para que la IA lo analice
         });
       } else {
         // Sin sesión → solo local
@@ -345,7 +349,25 @@ export default function App() {
               onAddExpense={() => setShowAddExpense(true)}
               onViewBudget={() => setCurrentScreen('budget')}
               onOpenSettings={() => setCurrentScreen('settings')}
+              onOpenCharts={() => setCurrentScreen('charts')}
+              onOpenHistory={() => setCurrentScreen('history')}
               onLogout={handleLogout}
+            />
+          )}
+
+          {currentScreen === 'charts' && (
+            <ChartsScreen
+              expenses={expenses}
+              categories={categories}
+              onBack={() => setCurrentScreen('home')}
+            />
+          )}
+
+          {currentScreen === 'history' && (
+            <HistoryScreen
+              expenses={expenses}
+              categories={categories}
+              onBack={() => setCurrentScreen('home')}
             />
           )}
 
@@ -380,11 +402,13 @@ export default function App() {
             </div>
           )}
 
-          {/* Panel de alertas IA Cybercore — siempre visible encima de todo */}
           <AlertaCybercorePanel
             alertas={alertasCybercore}
             onDismiss={handleDismissAlerta}
           />
+
+          {/* Chatbot flotante IA — Solo para usuarios registrados */}
+          {userId && <ChatbotIA />}
 
         </div>
       </div>
