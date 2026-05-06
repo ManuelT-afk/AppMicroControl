@@ -1,1 +1,18 @@
-node_modules
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Secretos y Variables de entorno
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build y Temporales
+dist/
+build/
+.cache/
+*.log
