@@ -21,7 +21,6 @@ import WelcomeScreen from './components/WelcomeScreen';
 import SettingsScreen from './components/SettingsScreen';
 import ChartsScreen from './components/ChartsScreen';
 import HistoryScreen from './components/HistoryScreen';
-import ChatbotIA from './components/ChatbotIA';
 
 // ─── Tipos Core (fuente de verdad) ──────────────────────────────────────────
 export type Expense = {
@@ -406,9 +405,6 @@ export default function App() {
             alertas={alertasCybercore}
             onDismiss={handleDismissAlerta}
           />
-
-          {/* Chatbot flotante IA — Solo para usuarios registrados */}
-          {userId && <ChatbotIA />}
 
         </div>
       </div>

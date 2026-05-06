@@ -60,10 +60,10 @@ export function useTransaccionesMonitor({
 
     // Ahora escuchamos la colección real de gastos
     const expensesRef = collection(db, 'users', userId, 'expenses');
+    // Simplificamos la consulta quitando el orderBy para evitar el error de índice compuesto
     const q = query(
       expensesRef,
-      where('procesado', '==', false),
-      orderBy('date', 'desc')
+      where('procesado', '==', false)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -95,9 +95,12 @@ export function useTransaccionesMonitor({
         const comercio: string = datos.note   ?? datos.category ?? 'Gasto';
         const saldoRestante    = Math.max(limiteActual - totalGastado, 0);
 
+        console.log(`[Monitor] Nuevo gasto detectado: $${monto} en ${comercio}. Llamando a IA...`);
+
         try {
           // Llamar a Antigravity IA
           const respuestaIA = await analizarGastoConIA(monto, comercio, saldoRestante);
+          console.log('[Monitor] IA respondió:', respuestaIA);
           
           // Emitir alerta tipada al panel visual
           const porcentaje = ((totalGastado + monto) / limiteActual) * 100;
@@ -125,7 +128,7 @@ export function useTransaccionesMonitor({
             nivel,
             monto,
             comercio,
-            timestamp: (datos.fecha as Timestamp)?.toDate() ?? new Date(),
+            timestamp: (datos.date as Timestamp)?.toDate() ?? new Date(),
           });
 
           // Marcar como procesado para no repetir

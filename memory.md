@@ -130,6 +130,21 @@ isInitialLoad.current = false;
 
 ---
 
+### [2026-05-05] — BUG — IA no procesaba gastos por nombre de campo incorrecto
+
+**Contexto**: Las notificaciones de IA no aparecían a pesar de que los gastos se registraban en la colección correcta.
+
+**Causa raíz**: En `App.tsx` guardábamos el gasto con el campo `date`, pero en `useTransaccionesMonitor.ts` el monitor intentaba leer `datos.fecha`. Esto causaba un error silencioso al intentar convertir un campo inexistente a marca de tiempo de JS.
+
+**Solución**: Se sincronizaron ambos archivos para usar el estándar `date`.
+
+**Regla aprendida**:
+> ✅ Siempre verificar la consistencia de los nombres de campos entre la función de escritura (`addDoc`) y la función de escucha (`onSnapshot`).
+
+**Tags**: #firestore #bug #sync
+
+---
+
 ### [2026-05-05] — BUG — Notificaciones de IA desaparecieron tras quitar el Simulador
 
 **Contexto**: Al eliminar el "Simulador de Banco IA", las notificaciones automáticas de Antigravity dejaron de aparecer al registrar gastos.
