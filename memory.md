@@ -20,6 +20,19 @@
 
 ## 📚 Registro de Errores y Aprendizajes
 
+### [2026-05-05] — SISTEMA — Eliminación de IA (Antigravity)
+
+**Contexto**: Debido a problemas persistentes de conectividad (Error 404/Región) con la API de Gemini, se decidió retirar todas las funciones de IA.
+
+**Cambios**:
+1. Se eliminó el Chatbot flotante.
+2. Se eliminó el servicio `antigravity.ts`.
+3. Se convirtió `useTransaccionesMonitor.ts` a una lógica estática que calcula alertas de presupuesto basadas en porcentajes (65% y 90%).
+
+**Beneficio**: La app ahora es 100% estable y no depende de servicios externos para sus funciones principales de notificación.
+
+**Tags**: #ia #cleanup #estabilidad
+
 ---
 
 ### [2026-05-04] — SISTEMA — Inicialización de memoria
